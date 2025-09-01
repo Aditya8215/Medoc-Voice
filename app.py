@@ -8,7 +8,6 @@ from PIL import Image
 from streamlit_option_menu import option_menu
 import time
 from pydub import AudioSegment
-# --- IMPORTS for Recording Functionality ---
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 import av
 
@@ -90,10 +89,7 @@ def generate_medical_script():
         return "Gemini API is not available. Cannot generate script."
     try:
         with st.spinner("Generating new medical script..."):
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
-            # =================================================================
-            # UPDATED: New detailed system prompt for script generation
-            # =================================================================
+            model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
             system_prompt = """
             You are MedScribe Simulator.
             Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
@@ -163,7 +159,7 @@ def extract_prescription_from_text(transcription_text):
     if not GEMINI_AVAILABLE: return {"error": "Gemini API is not available."}
     try:
         with st.spinner('Generating prescription from transcription...'):
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
             prompt = f"""
             You are a highly intelligent medical data extraction system. You are given a text transcription of a doctor-patient consultation.
             Your task is to extract key medical information from this text and format it into a single, valid JSON object according to the rules and structure below.
@@ -449,3 +445,4 @@ elif selected == "Home":
 elif selected == "Settings":
     st.title("Settings")
     st.info("Application settings and configuration options will be available here in a future version.")
+
