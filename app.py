@@ -8,7 +8,6 @@ from PIL import Image
 from streamlit_option_menu import option_menu
 import time
 from pydub import AudioSegment
-# --- IMPORTS for Recording Functionality ---
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 import av
 
@@ -90,7 +89,7 @@ def generate_medical_script():
         return "Gemini API is not available. Cannot generate script."
     try:
         with st.spinner("Generating new medical script..."):
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
             system_prompt = """
             System Prompt for Generating Test Scripts (Minimal Output)
             You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
@@ -130,7 +129,7 @@ def transcribe_audio_only(audio_path):
         with st.spinner('Uploading file for transcription...'):
             audio_file = genai.upload_file(path=audio_path)
         with st.spinner('Transcribing audio... This may take a moment.'):
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
             prompt = "Please transcribe the following audio file accurately. Provide only the raw text of the conversation."
             response = model.generate_content([prompt, audio_file], request_options={"timeout": 600})
             return response.text
@@ -141,7 +140,7 @@ def extract_prescription_from_text(transcription_text):
     if not GEMINI_AVAILABLE: return {"error": "Gemini API is not available."}
     try:
         with st.spinner('Generating prescription from transcription...'):
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            model = genai.GenerativeModel('models/gemini-2.5-flash-lite')
             prompt = f"""
             You are a highly intelligent medical data extraction system. You are given a text transcription of a doctor-patient consultation.
             Your task is to extract key medical information from this text and format it into a single, valid JSON object according to the rules and structure below.
@@ -224,9 +223,6 @@ if selected == "Transcription":
     
     recorded_audio_path = os.path.join(record_dir, "recording.wav")
     if not webrtc_ctx.state.playing and os.path.exists(recorded_audio_path):
-        # =================================================================
-        # UPDATED: Clearer section to listen to recordings
-        # =================================================================
         st.divider()
         st.subheader("Step 1: Review Your Recording")
         st.write("Listen to your recording. You can add noise for testing, then transcribe it.")
@@ -269,7 +265,6 @@ if selected == "Transcription":
     st.divider()
 
     with st.expander("📁 Or Upload an Existing Audio File..."):
-        # ... (Upload functionality is unchanged)
         st.markdown("Upload a medical consultation audio file (`.wav`) for transcription and analysis.")
         uploaded_file = st.file_uploader("Upload Audio File", type=['wav'], key="file_uploader")
         if uploaded_file:
@@ -372,3 +367,4 @@ elif selected == "Home":
 elif selected == "Settings":
     st.title("Settings")
     st.info("Application settings and configuration options will be available here in a future version.")
+
