@@ -1,0 +1,8 @@
+streamlit
+google-generativeai
+python-dotenv
+numpy
+Pillow
+streamlit-option-menu
+pydub
+pyaudioloop
