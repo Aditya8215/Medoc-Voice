@@ -94,43 +94,43 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
 
             if dictation_type == "Doctor Dictation":
                 system_prompt = """
-                System Prompt for Generating Test Scripts (Minimal Output)
-                You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
-                Guidelines:
+                #*System Prompt for Generating Test Scripts* (Minimal Output)
+                #*You are MedScribe Simulator*. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
+                ##*Guidelines*:
                 - Output only the dictation script text, no titles, no formatting, no explanations.
                 - The script must sound like spoken dictation a doctor would give.
                 - Cover: patient intro, symptoms, exam findings, impression/diagnosis, treatment plan, and prescription.
                 - Use Indian medical context and safe, generic prescriptions.
                 - Script length: 150–450 words,1–3 minutes reading time
                 -Vary specialty, severity, and dictation style across scripts.
-                -Include edge cases in some scripts (unclear speech, mid-sentence correction, abrupt stop).
+                -*Include edge cases in some scripts (unclear speech, mid-sentence correction, abrupt stop)*
                 Output rule:
                 Return only the dictation script text as if spoken by the doctor.
                 """
             else: # Doctor-Patient Conversation
                 system_prompt = """
-                Doctor–Patient Conversation → Verbatim Diarized Transcript
+                #*Doctor–Patient Conversation → Verbatim Diarized Transcript*
                 You are Intent Translator MAX, tasked with converting raw audio of a doctor–patient consultation into a verbatim, India-specific transcript.
-                MISSION
-                Perform speech recognition and speaker diarization.
-                Handle imperfect audio (phone microphones, background noise, echo, distant voices).
+                #*MISSION*
+                1.Perform speech recognition and speaker diarization.
+                2.Handle imperfect audio (phone microphones, background noise, echo, distant voices).
                 Output a plain text transcript formatted with strict speaker labels:
                 Doctor: ...
                 Patient: ...
                 PROTOCOL
-                Transcription Rules
+                ##Transcription Rules
                 Transcribe verbatim (include hesitations, repetitions).
-                Do not remove fillers unless they are pure non-speech noise.
-                Maintain maximum medical term accuracy.
-                Diarization Rules
+                1.Do not remove fillers unless they are pure non-speech noise.
+                2.Maintain maximum medical term accuracy.
+                ##3.Diarization Rules
                 Always label as Doctor or Patient (never Speaker 1/2).
                 Use context (greetings, questions vs. answers, medical authority) to assign correctly.
                 If unsure, insert [unclear speaker] but minimize such cases.
-                Noise Handling Rules
+                ##Noise Handling Rules
                 Adapt to phone-quality audio, background chatter, and echo.
                 If part of the speech is unintelligible, insert [inaudible] or [unclear].
 
-                Never guess medical terms—mark them [unclear] if indistinct
+                ##Never guess medical terms—mark them [unclear] if indistinct
                 Output Rules
                 Plain text only, no timestamps, no JSON, no metadata.
                 Each speaker turn starts on a new line.
@@ -140,7 +140,7 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
                 Doctor: Any other symptoms like shortness of breath or chest pain?
                 Patient: Yes, a little shortness of breath especially at night.
 
-                SUCCESS CRITERIA
+                ##SUCCESS CRITERIA
                 Faithful capture of every spoken word (except non-speech noise).
                 Accurate identification of Doctor vs. Patient.
                 Robust handling of Indian English, regional accents, and noisy clinic/phone environments.
@@ -345,19 +345,14 @@ if selected == "Transcription":
                 audio_processor_factory=AudioRecorder,
                 media_stream_constraints={ "video": False, "audio": { "echoCancellation": True, "noiseSuppression": True, "autoGainControl": True }},
             )
-
-            # --- FIX FOR SINGLE-CLICK STOP ---
-            # Detect the transition from playing to stopped
             just_stopped = st.session_state.prev_webrtc_state_playing and webrtc_ctx and not webrtc_ctx.state.playing
-            # Update the state for the next run
             if webrtc_ctx:
                 st.session_state.prev_webrtc_state_playing = webrtc_ctx.state.playing
-            # If we just stopped, wait a moment for the file-write and then rerun the script to show the review section
             if just_stopped:
                 time.sleep(0.5)
                 st.rerun()
 
-    # REVIEW RECORDING SECTION
+    # TEMP RECORdings
     record_dir = "temp_recordings"
     recorded_audio_path = os.path.join(record_dir, "recording.wav")
     if webrtc_ctx and not webrtc_ctx.state.playing and os.path.exists(recorded_audio_path):
@@ -497,15 +492,14 @@ if selected == "Transcription":
         st.divider()
         st.subheader("Full JSON Output")
         st.json(result_data)
-
-
+# Home Page
 elif selected == "Home":
     st.title("Welcome to Medoc Voice 🩺")
     st.markdown("### Revolutionizing Medical Documentation with AI")
     st.markdown("##### This application is for testing and demonstration purposes only- Your Audio is stored locally and not shared.")
     st.write("1. Model- Gemini 2.5 Flash lite")
     st.write("2. Input File - .wav file")
-
+# Settings Page
 elif selected == "Settings":
     st.title("Settings")
     st.info("Application settings and configuration options will be available here in a future version.")
