@@ -94,43 +94,43 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
 
             if dictation_type == "Doctor Dictation":
                 system_prompt = """
-                #*System Prompt for Generating Test Scripts* (Minimal Output)
-                #*You are MedScribe Simulator*. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
-                ##*Guidelines*:
+                System Prompt for Generating Test Scripts (Minimal Output)
+                You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.
+                Guidelines:
                 - Output only the dictation script text, no titles, no formatting, no explanations.
                 - The script must sound like spoken dictation a doctor would give.
                 - Cover: patient intro, symptoms, exam findings, impression/diagnosis, treatment plan, and prescription.
                 - Use Indian medical context and safe, generic prescriptions.
                 - Script length: 150–450 words,1–3 minutes reading time
                 -Vary specialty, severity, and dictation style across scripts.
-                -*Include edge cases in some scripts (unclear speech, mid-sentence correction, abrupt stop)*
+                -Include edge cases in some scripts (unclear speech, mid-sentence correction, abrupt stop).
                 Output rule:
                 Return only the dictation script text as if spoken by the doctor.
                 """
             else: # Doctor-Patient Conversation
                 system_prompt = """
-                #*Doctor–Patient Conversation → Verbatim Diarized Transcript*
+                Doctor–Patient Conversation → Verbatim Diarized Transcript
                 You are Intent Translator MAX, tasked with converting raw audio of a doctor–patient consultation into a verbatim, India-specific transcript.
-                #*MISSION*
-                1.Perform speech recognition and speaker diarization.
-                2.Handle imperfect audio (phone microphones, background noise, echo, distant voices).
+                MISSION
+                Perform speech recognition and speaker diarization.
+                Handle imperfect audio (phone microphones, background noise, echo, distant voices).
                 Output a plain text transcript formatted with strict speaker labels:
                 Doctor: ...
                 Patient: ...
                 PROTOCOL
-                ##Transcription Rules
+                Transcription Rules
                 Transcribe verbatim (include hesitations, repetitions).
-                1.Do not remove fillers unless they are pure non-speech noise.
-                2.Maintain maximum medical term accuracy.
-                ##3.Diarization Rules
+                Do not remove fillers unless they are pure non-speech noise.
+                Maintain maximum medical term accuracy.
+                Diarization Rules
                 Always label as Doctor or Patient (never Speaker 1/2).
                 Use context (greetings, questions vs. answers, medical authority) to assign correctly.
                 If unsure, insert [unclear speaker] but minimize such cases.
-                ##Noise Handling Rules
+                Noise Handling Rules
                 Adapt to phone-quality audio, background chatter, and echo.
                 If part of the speech is unintelligible, insert [inaudible] or [unclear].
 
-                ##Never guess medical terms—mark them [unclear] if indistinct
+                Never guess medical terms—mark them [unclear] if indistinct
                 Output Rules
                 Plain text only, no timestamps, no JSON, no metadata.
                 Each speaker turn starts on a new line.
@@ -140,7 +140,7 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
                 Doctor: Any other symptoms like shortness of breath or chest pain?
                 Patient: Yes, a little shortness of breath especially at night.
 
-                ##SUCCESS CRITERIA
+                SUCCESS CRITERIA
                 Faithful capture of every spoken word (except non-speech noise).
                 Accurate identification of Doctor vs. Patient.
                 Robust handling of Indian English, regional accents, and noisy clinic/phone environments.
@@ -251,6 +251,24 @@ def generate_diff_html(text1, text2):
 
     return html.replace('\n', '<br>')
 
+# --- FIX: ADDED HELPER FUNCTION TO PREVENT TypeError ---
+def format_list_for_display(data_list):
+    """Safely converts a list of strings or dicts into a single comma-separated string."""
+    if not isinstance(data_list, list):
+        return str(data_list)
+    
+    processed_items = []
+    for item in data_list:
+        if isinstance(item, str):
+            processed_items.append(item)
+        elif isinstance(item, dict) and item:
+            # Assumes the dictionary's first value is the desired string
+            processed_items.append(str(list(item.values())[0]))
+        else:
+            # Fallback for other data types
+            processed_items.append(str(item))
+            
+    return ", ".join(processed_items)
 
 # SIDEBAR
 with st.sidebar:
@@ -278,10 +296,9 @@ if selected == "Transcription":
         st.session_state.recorder_key = 0
     if 'mic_active' not in st.session_state:
         st.session_state.mic_active = False
-    # --- CHANGE: ADDED STATE TO DETECT WHEN RECORDING STOPS ---
     if 'prev_webrtc_state_playing' not in st.session_state:
         st.session_state.prev_webrtc_state_playing = False
-
+        
     col_a, col_b = st.columns(2)
     with col_a:
         st.radio("Related to Healthcare Industry?", ["Yes", "No"], key="is_healthcare", horizontal=True)
@@ -345,6 +362,7 @@ if selected == "Transcription":
                 audio_processor_factory=AudioRecorder,
                 media_stream_constraints={ "video": False, "audio": { "echoCancellation": True, "noiseSuppression": True, "autoGainControl": True }},
             )
+            
             just_stopped = st.session_state.prev_webrtc_state_playing and webrtc_ctx and not webrtc_ctx.state.playing
             if webrtc_ctx:
                 st.session_state.prev_webrtc_state_playing = webrtc_ctx.state.playing
@@ -352,11 +370,10 @@ if selected == "Transcription":
                 time.sleep(0.5)
                 st.rerun()
 
-    # TEMP RECORdings
     record_dir = "temp_recordings"
     recorded_audio_path = os.path.join(record_dir, "recording.wav")
     if webrtc_ctx and not webrtc_ctx.state.playing and os.path.exists(recorded_audio_path):
-        with recorder_col: # Display the review section in the same column
+        with recorder_col: 
             st.divider()
             st.subheader("Review Your Recording")
             st.audio(recorded_audio_path)
@@ -415,7 +432,7 @@ if selected == "Transcription":
                 if isinstance(transcription, dict) and "error" in transcription: st.error(transcription["error"])
                 else: st.success("Transcription successful!"); st.session_state.transcription = transcription
 
-    # SHARED WORKFLOW
+    # SHARED WORKFLOW 
     if 'transcription' in st.session_state:
         st.divider()
         st.header("Review Transcription & Generate Prescription")
@@ -448,8 +465,9 @@ if selected == "Transcription":
         p_col3.text_input("Date", value=result_data.get('date', ''), disabled=True, key="consult_date")
         st.subheader("Complaints & Medical History")
         ch_col1, ch_col2 = st.columns(2)
-        ch_col1.text_area("Chief Complaints", value=", ".join(result_data.get('complaints', [])), disabled=True, key="complaints")
-        ch_col2.text_area("Medical History", value=", ".join(result_data.get('medicalHistory', [])), disabled=True, key="medical_history")
+        # --- FIX: APPLIED HELPER FUNCTION TO PREVENT TypeError ---
+        ch_col1.text_area("Chief Complaints", value=format_list_for_display(result_data.get('complaints', [])), disabled=True, key="complaints")
+        ch_col2.text_area("Medical History", value=format_list_for_display(result_data.get('medicalHistory', [])), disabled=True, key="medical_history")
         st.subheader("Vitals")
         vitals = result_data.get('vitals', {})
         v_col1, v_col2, v_col3, v_col4, v_col5 = st.columns(5)
@@ -459,7 +477,8 @@ if selected == "Transcription":
         v_col4.text_input("Temperature", value=vitals.get('temp', ''), disabled=True, key="vitals_temp")
         v_col5.text_input("SpO2", value=vitals.get('spO2', ''), disabled=True, key="vitals_spo2")
         st.subheader("Clinical Assessment & Plan")
-        st.text_area("Diagnosis", value=", ".join(result_data.get('diagnosis', [])), disabled=True, key="diagnosis")
+        # --- FIX: APPLIED HELPER FUNCTION TO PREVENT TypeError ---
+        st.text_area("Diagnosis", value=format_list_for_display(result_data.get('diagnosis', [])), disabled=True, key="diagnosis")
         st.text_area("Clinical Note", value=result_data.get('clinicalNote', ''), disabled=True, key="clinical_note")
         st.subheader("Medication")
         medications = result_data.get('medication', [])
@@ -492,14 +511,15 @@ if selected == "Transcription":
         st.divider()
         st.subheader("Full JSON Output")
         st.json(result_data)
-# Home Page
+
+
 elif selected == "Home":
     st.title("Welcome to Medoc Voice 🩺")
     st.markdown("### Revolutionizing Medical Documentation with AI")
     st.markdown("##### This application is for testing and demonstration purposes only- Your Audio is stored locally and not shared.")
-    st.write("1. Model- Gemini 2.5 Flash lite")
+    st.write("1. Model- Gemini 1.5 Flash")
     st.write("2. Input File - .wav file")
-# Settings Page
+
 elif selected == "Settings":
     st.title("Settings")
     st.info("Application settings and configuration options will be available here in a future version.")
