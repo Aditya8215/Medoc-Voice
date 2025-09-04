@@ -15,6 +15,8 @@ from ui_utils import local_css
 from gemini_utils import generate_medical_script, transcribe_audio_only, extract_prescription_from_text
 from diff_utils import generate_diff_html
 from audio_utils import add_noise_to_audio
+from cloudinary_utils import upload_audio_to_cloudinary
+from mongodb_utils import upload_prescription_to_mongodb
 
 # PAGE CONFIGURATION
 st.set_page_config(
@@ -192,6 +194,15 @@ if selected == "Transcription":
                 st.audio(noisy_recording_path)
                 final_recording_path = noisy_recording_path
 
+            result = upload_audio_to_cloudinary(final_recording_path)
+            if "url" in result:
+                st.success("Audio uploaded to Cloudinary!")
+                st.write("Cloudinary URL:", result["url"])
+                st.session_state.cloudinary_url = result["url"]
+                st.session_state.cloudinary_public_id = result["public_id"]
+            else:
+                st.error(result.get("error", "Upload failed"))
+
             st.divider()
             b_col1, b_col2 = st.columns(2)
             with b_col1:
@@ -241,6 +252,16 @@ if selected == "Transcription":
                 st.audio(noisy_path, format="audio/wav")
                 final_audio_path = noisy_path
 
+            result = upload_audio_to_cloudinary(final_audio_path)
+
+            if "url" in result:
+                st.success("Audio uploaded to Cloudinary!")
+                st.write("Cloudinary URL:", result["url"])
+                st.session_state.cloudinary_url = result["url"]
+                st.session_state.cloudinary_public_id = result["public_id"]
+            else:
+                st.error(result.get("error", "Upload failed"))
+
             if st.button("Transcribe Uploaded File", use_container_width=True):
                 if GEMINI_AVAILABLE:
                     transcription = transcribe_audio_only(final_audio_path)
@@ -282,11 +303,20 @@ if selected == "Transcription":
                     st.balloons()
                     st.success("Prescription data extracted successfully!")
                     st.session_state.result = result
+                    # Upload prescription and audio URL to MongoDB
+                    audio_url = st.session_state.get("cloudinary_url")
+                    if audio_url:
+                        mongo_result = upload_prescription_to_mongodb(result, audio_url)
+                        if "inserted_id" in mongo_result:
+                            st.info(f"Prescription saved to MongoDB. Document ID: {mongo_result['inserted_id']}")
+                        else:
+                            st.error(f"MongoDB upload error: {mongo_result.get('error', 'Unknown error')}")
             else:
                 st.error("Gemini API is not available.")
 
     # RESULTS DISPLAY SECTION
     if "result" in st.session_state:
+
         st.divider()
         st.header("View Extracted Data")
         st.json(st.session_state.result)
