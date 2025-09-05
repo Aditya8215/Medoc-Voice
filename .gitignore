@@ -29,3 +29,4 @@ temp_recordings/
 __pycache__/
 
 .env
+venv

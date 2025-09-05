@@ -27,8 +27,11 @@ st.set_page_config(
 )
 
 # LOAD ENVIRONMENT VARIABLES
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
+if "GOOGLE_API_KEY" in st.secrets:
+    GEMINI_API_KEY = st.secrets["GOOGLE_API_KEY"]
+else:
+    load_dotenv()
+    GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # GEMINI API SETUP
 GEMINI_AVAILABLE = False
@@ -39,7 +42,8 @@ if GEMINI_API_KEY:
     except Exception as e:
         st.error(f"Failed to configure Gemini API: {e}")
 else:
-    st.error("Google API Key not found. Please set it in your .env file.")
+    st.error("Google API Key not found. Please set it in Streamlit secrets or .env file.")
+
 
 # STYLING
 local_css()
