@@ -26,14 +26,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Check if the app is running on Streamlit Cloud
-if os.getenv("STREAMLIT_SERVER_RUN_ON_CLOUD") == "true":
-    # Get secrets from Streamlit Cloud's secret management
-    GEMINI_API_KEY = st.secrets.get("GOOGLE_API_KEY")
-    MONGO_URI = st.secrets.get("MONGO_URI")
-    CLOUDINARY_URL = st.secrets.get("CLOUDINARY_URL")
-else:
-    # Get secrets from the local .env file for development
+try:
+    # First, try to get secrets from Streamlit Cloud's secret management
+    GEMINI_API_KEY = st.secrets["GOOGLE_API_KEY"]
+    MONGO_URI = st.secrets["MONGO_URI"]
+    CLOUDINARY_URL = st.secrets["CLOUDINARY_URL"]
+except (KeyError, FileNotFoundError):
+    # If secrets aren't on Streamlit Cloud (or secrets.toml is not found locally),
+    # fall back to the local .env file for development
     from dotenv import load_dotenv
     load_dotenv()
     GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
