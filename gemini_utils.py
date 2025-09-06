@@ -10,10 +10,18 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
             model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
 
             if dictation_type == "Doctor Dictation":
-                system_prompt = """
+                system_prompt = f"""
+                ##*Context*:-
                 #*You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.*
+                {st.session_state.get("is_healthcare")}='Yes'
+                ##*Generate heathcare specific context in the script*
+                {st.session_state.get("is_healthcare")}='No'
+                ##*Generate without heathcare specific context in the script*
                 ##*Guidelines*:
+                - *Do not repeat script*
+                - Restrcit use of punctuators other than neccessary gaps for pauses. 
                 - Output only the dictation script text, no titles, no formatting, no explanations.
+                - *generate not more than 100words*
                 - The script must sound like spoken dictation a doctor would give, with pause neccessary.
                 - Cover: patient intro, symptoms, exam findings, impression/diagnosis, treatment plan, and prescription.
                 - Use Indian medical context and safe, generic prescriptions.
@@ -23,12 +31,20 @@ def generate_medical_script(dictation_type="Doctor Dictation"):
                 -*Use more medicine or durg names*
                 #*Output rule*:
                 Return only the dictation script text as if spoken by the doctor.
+                - *START DIRECT DICTATION- example::-- do not include-here we go,let's start direct dicatation or any such kind*
+                
                 """
             else:  # Doctor-Patient Conversation
-                system_prompt = """
-                You are MedScribe Simulator. Your task is to generate a realistic, India-specific, fictional doctor-patient conversation script for QA testers to read aloud.
-
-                Guidelines:
+                system_prompt = f"""
+            You are MedScribe Simulator. Your task is to generate a realistic, India-specific, fictional doctor-patient conversation script for QA testers to read aloud.
+                ##*Context*:
+                #*You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.*
+                {st.session_state.get("is_healthcare")}=='Yes'
+                ##*If the healthcare industry is selected as 'Yes', then include healthcare context in the
+                {st.session_state.get("is_healthcare")}=='No'
+                generate a general medical dictation script without specific healthcare context.*
+                ##*Guidelines*:
+                - *Do not repeat script *
                 - Output ONLY the diarized script text, with no titles, headers, or explanations.
                 - The script must be a back-and-forth dialogue.
                 - Start each line with either "Doctor: " or "Patient: ".
