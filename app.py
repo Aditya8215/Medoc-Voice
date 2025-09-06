@@ -26,11 +26,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# LOAD ENVIRONMENT VARIABLES
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
+try:
+    # First, try to get secrets from Streamlit Cloud's secret management
+    GEMINI_API_KEY = st.secrets["GOOGLE_API_KEY"]
+    MONGO_URI = st.secrets["MONGO_URI"]
+    CLOUDINARY_URL = st.secrets["CLOUDINARY_URL"]
+except (KeyError, FileNotFoundError):
+    # If secrets aren't on Streamlit Cloud (or secrets.toml is not found locally),
+    # fall back to the local .env file for development
+    from dotenv import load_dotenv
+    load_dotenv()
+    GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
+    MONGO_URI = os.getenv("MONGO_URI")
+    CLOUDINARY_URL = os.getenv("CLOUDINARY_URL")
 
-# GEMINI API SETUP
+# --- GEMINI API SETUP ---
 GEMINI_AVAILABLE = False
 if GEMINI_API_KEY:
     try:
@@ -39,7 +49,8 @@ if GEMINI_API_KEY:
     except Exception as e:
         st.error(f"Failed to configure Gemini API: {e}")
 else:
-    st.error("Google API Key not found. Please set it in your .env file.")
+    st.error("Google API Key not found. Please set it in Streamlit secrets or a local .env file.")
+
 
 # STYLING
 local_css()
