@@ -537,7 +537,7 @@ if selected == "Transcription":
                     st.error("Gemini API is not available.")
                 # Remove the flag and rerun to update the UI.
                 st.session_state.pop("needs_prescription_generation", None)
-                st.rerun()
+                # st.rerun()
 
         # --- Display Transcription and Diff View ---
         # If a script was generated, show a side-by-side comparison.
@@ -587,4 +587,5 @@ elif selected == "Home":
 # -----------------------------------------------------------------------------
 elif selected == "Settings":
     st.title("Settings")
+
     st.info("Application settings and configuration options will be available here in a future version.")
