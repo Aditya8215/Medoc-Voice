@@ -298,8 +298,8 @@ if selected == "Transcription":
             if os.path.exists(noisy_recording_path):
                 st.write("Noisy Version:")
                 st.audio(noisy_recording_path)
-            if 'cloudinary_url' in st.session_state:
-                st.write("Cloudinary URL:", st.session_state.cloudinary_url)
+            # if 'cloudinary_url' in st.session_state:
+            #     st.write("Cloudinary URL:", st.session_state.cloudinary_url)
             
             # --- Auto-Transcription Logic ---
             # This block runs if the `needs_transcription` flag is set.
@@ -467,8 +467,8 @@ if selected == "Transcription":
                     st.info("Noise added.")
                     st.audio(noisy_path, format="audio/wav")
 
-            if "cloudinary_url" in st.session_state:
-                st.write("Cloudinary URL:", st.session_state.cloudinary_url)
+            # if "cloudinary_url" in st.session_state:
+            #     st.write("Cloudinary URL:", st.session_state.cloudinary_url)
             
             # --- Manual Transcription Button for Uploaded File ---
             if st.button("Transcribe Uploaded File", use_container_width=True):
@@ -503,7 +503,6 @@ if selected == "Transcription":
         st.header("Review Transcription & Generate Prescription")
 
         # --- Automatic Prescription Generation ---
-        # Runs if the `needs_prescription_generation` flag is set.
         if st.session_state.get("needs_prescription_generation"):
             with st.spinner("Auto-generating prescription..."):
                 if GEMINI_AVAILABLE:
@@ -527,15 +526,14 @@ if selected == "Transcription":
                                     feedback_rating,
                                     feedback_text
                                 )
-                            if "inserted_id" in mongo_result:
-                                st.info(f"Prescription saved to MongoDB. Document ID: {mongo_result['inserted_id']}")
+                            # if "inserted_id" in mongo_result:
+                            #     st.info(f"Prescription saved to MongoDB. Document ID: {mongo_result['inserted_id']}")
                             else:
                                 st.error(f"MongoDB upload error: {mongo_result.get('error', 'Unknown error')}")
                         else:
                             st.warning("Could not save to database: Cloudinary URL not found.")
                 else:
                     st.error("Gemini API is not available.")
-                # Remove the flag and rerun to update the UI.
                 st.session_state.pop("needs_prescription_generation", None)
                 # st.rerun()
 
@@ -589,3 +587,4 @@ elif selected == "Settings":
     st.title("Settings")
 
     st.info("Application settings and configuration options will be available here in a future version.")
+
