@@ -269,9 +269,14 @@ if selected == "Transcription":
                 final_recording_path = recorded_audio_path
                 noisy_recording_path = os.path.join(record_dir, "noisy_recording.wav")
                 
-                # Add synthetic noise to the recording for robustness testing.
-                if add_noise_to_audio(recorded_audio_path, noisy_recording_path):
+                # <<< FIX START: LIVE RECORDING >>>
+                # Attempt to create a noisy version of the recording.
+                add_noise_to_audio(recorded_audio_path, noisy_recording_path)
+
+                # Check if the noisy file was successfully created and use it for the upload if it exists.
+                if os.path.exists(noisy_recording_path):
                     final_recording_path = noisy_recording_path
+                # <<< FIX END: LIVE RECORDING >>>
 
                 with st.spinner("Uploading audio..."):
                     # Generate a unique filename for Cloudinary using a timestamp.
@@ -280,7 +285,6 @@ if selected == "Transcription":
                 
                 # If upload is successful, store URLs and set flags for the next steps.
                 if "url" in result:
-                    # st.success("Audio uploaded to Cloudinary!")
                     st.session_state.cloudinary_url = result["url"]
                     st.session_state.cloudinary_public_id = result["public_id"]
                     st.session_state.upload_complete = True # Flag to prevent re-upload.
@@ -398,11 +402,18 @@ if selected == "Transcription":
                 original_path = os.path.join(temp_dir, "original.wav")
                 with open(original_path, "wb") as f: f.write(uploaded_file.getbuffer())
 
+                # <<< FIX START: FILE UPLOAD >>>
                 # Add noise and prepare for upload.
                 final_audio_path = original_path
                 noisy_path = os.path.join(temp_dir, "noisy.wav")
-                if add_noise_to_audio(original_path, noisy_path):
+                
+                # Try to create a noisy version of the uploaded file.
+                add_noise_to_audio(original_path, noisy_path)
+
+                # Check if the noisy file was successfully created and use it for the upload.
+                if os.path.exists(noisy_path):
                     final_audio_path = noisy_path
+                # <<< FIX END: FILE UPLOAD >>>
 
                 # Upload the processed file to Cloudinary.
                 with st.spinner("Uploading audio..."):
@@ -511,7 +522,7 @@ if selected == "Transcription":
                                 mongo_result = upload_prescription_to_mongodb(
                                     st.session_state.result, 
                                     audio_url,
-                                    st.session_state.get("script", ""), # <<< FIX IS HERE
+                                    st.session_state.get("script", ""),
                                     st.session_state.transcription,
                                     feedback_rating,
                                     feedback_text
