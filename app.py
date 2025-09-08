@@ -526,8 +526,8 @@ if selected == "Transcription":
                                     feedback_rating,
                                     feedback_text
                                 )
-                            # if "inserted_id" in mongo_result:
-                            #     st.info(f"Prescription saved to MongoDB. Document ID: {mongo_result['inserted_id']}")
+                            if "inserted_id" in mongo_result:
+                                st.info(f"Prescription saved to MongoDB")
                             else:
                                 st.error(f"MongoDB upload error: {mongo_result.get('error', 'Unknown error')}")
                         else:
@@ -587,4 +587,5 @@ elif selected == "Settings":
     st.title("Settings")
 
     st.info("Application settings and configuration options will be available here in a future version.")
+
 
