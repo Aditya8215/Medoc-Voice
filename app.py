@@ -511,7 +511,7 @@ if selected == "Transcription":
                                 mongo_result = upload_prescription_to_mongodb(
                                     st.session_state.result, 
                                     audio_url,
-                                    st.session_state.script,
+                                    st.session_state.get("script", ""), # <<< FIX IS HERE
                                     st.session_state.transcription,
                                     feedback_rating,
                                     feedback_text
