@@ -70,7 +70,7 @@ local_css()
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.title("🩺 Medoc Voice")
-    st.button("This APP will Store your Audio and Transcriptions")
+    st.info("Your data is being stored for improving the application")
     
     # Create the main navigation menu.
     selected = option_menu(
@@ -574,12 +574,16 @@ if selected == "Transcription":
 # -----------------------------------------------------------------------------
 elif selected == "Home":
     st.title("Welcome to Medoc Voice 🩺")
-    st.markdown("### Revolutionizing Medical Documentation with AI")
-    st.markdown("##### This application is for testing and demonstration purposes only- Your Audio is stored locally and not shared.")
-    st.write("1. Model- Gemini 2.0 Flash Lite")
-    st.write("2. Input File - .wav file")
-
-
+    st.subheader("""
+            \n-This application is for testing and demonstration purposes only 
+             1. Model- Gemini 2.0 Flash Lite \n
+             2. Input File - .wav file \n
+             3. Output - JSON Prescription""")
+    st.markdown("---")
+    st.subheader("""
+        \nHow to Use This Application->
+    **Generate a Script**: On the 'Transcription' page, select the dictation type and generate a medical script to read.
+    **Record Audio**: Use the built-in recorder to read the script aloud, or upload an existing .wav audio file.""")
 # -----------------------------------------------------------------------------
 # SETTINGS PAGE
 # -----------------------------------------------------------------------------
@@ -587,5 +591,6 @@ elif selected == "Settings":
     st.title("Settings")
 
     st.info("Application settings and configuration options will be available here in a future version.")
+
 
 
