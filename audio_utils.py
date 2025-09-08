@@ -14,4 +14,5 @@ def add_noise_to_audio(input_path, output_path, noise_level=0.05):
         return True
     except Exception as e:
         st.error(f"Error adding noise: {e}")
+
         return False
