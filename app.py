@@ -147,6 +147,7 @@ if selected == "Transcription":
             if GEMINI_AVAILABLE:
                 # Call the function to generate script and store it in session state.
                 st.session_state.script = generate_medical_script(st.session_state.dictation_type_selection)
+                st.session_state.script_json=extract_prescription_from_text(st.session_state.script)
             else:
                 st.error("Gemini API is not available to generate a script.")
 
@@ -518,10 +519,12 @@ if selected == "Transcription":
                         audio_url = st.session_state.get("cloudinary_url")
                         if audio_url:
                             with st.spinner("Saving prescription to database..."):
+                                
                                 mongo_result = upload_prescription_to_mongodb(
                                     st.session_state.result, 
                                     audio_url,
                                     st.session_state.get("script", ""),
+                                    st.session_state.script_json,
                                     st.session_state.transcription,
                                     feedback_rating,
                                     feedback_text
@@ -590,6 +593,7 @@ elif selected == "Home":
 elif selected == "Settings":
     st.title("Settings")
 
+    st.info("Application settings and configuration options will be available here in a future version.")
     st.info("Application settings and configuration options will be available here in a future version.")
 
 
