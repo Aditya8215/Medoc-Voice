@@ -98,6 +98,9 @@ with st.sidebar:
         # Handle feedback form submission.
         if submitted:
             if feedback_rating and feedback_text:
+                # --- FIX: Store feedback in session state ---
+                st.session_state.feedback_rating = feedback_rating
+                st.session_state.feedback_text = feedback_text
                 st.success("Thank you for your feedback!")
                 time.sleep(2) # Display success message briefly.
             else:
@@ -250,7 +253,7 @@ if selected == "Transcription":
             if webrtc_ctx:
                 st.session_state.prev_webrtc_state_playing = webrtc_ctx.state.playing
             if just_stopped:
-                time.sleep(0.5) # Wait briefly for the file to be written.
+                time.sleep(1.0) # <<< FIX: Increased sleep time for more reliability
                 st.rerun() # Rerun to process the saved audio file.
 
     # --- REVIEW RECORDING SECTION: Displayed after a recording is finished ---
@@ -452,7 +455,7 @@ if selected == "Transcription":
                         
                         # Clean up and trigger next step.
                         st.session_state.pop("needs_transcription", None) 
-                        st.rerun() 
+                        # st.rerun() # <<< FIX: This rerun is unnecessary
                     else:
                         st.error("Gemini API not available or file path not found.")
                         st.session_state.pop("needs_transcription", None)
@@ -524,13 +527,17 @@ if selected == "Transcription":
                                     st.session_state.result, 
                                     audio_url,
                                     st.session_state.get("script", ""),
-                                    st.session_state.script_json,
+                                    st.session_state.get("script_json", {}),
                                     st.session_state.transcription,
-                                    feedback_rating,
-                                    feedback_text
+                                    st.session_state.get("feedback_rating", ""),
+                                    st.session_state.get("feedback_text", "")
                                 )
                             if "inserted_id" in mongo_result:
                                 st.info(f"Prescription saved to MongoDB")
+                                # --- FIX: Clean up the temp upload directory after successful processing ---
+                                if 'upload_dir' in st.session_state and os.path.exists(st.session_state.upload_dir):
+                                    shutil.rmtree(st.session_state.upload_dir)
+                                    st.session_state.pop('upload_dir', None)
                             else:
                                 st.error(f"MongoDB upload error: {mongo_result.get('error', 'Unknown error')}")
                         else:
@@ -578,10 +585,10 @@ if selected == "Transcription":
 elif selected == "Home":
     st.title("Welcome to Medoc Voice 🩺")
     st.subheader("""
-            \n-This application is for testing and demonstration purposes only 
-             1. Model- Gemini 2.0 Flash Lite \n
-             2. Input File - .wav file \n
-             3. Output - JSON Prescription""")
+                \n-This application is for testing and demonstration purposes only 
+                  1. Model- Gemini 2.0 Flash Lite \n
+                  2. Input File - .wav file \n
+                  3. Output - JSON Prescription""")
     st.markdown("---")
     st.subheader("""
         \nHow to Use This Application->
@@ -595,6 +602,3 @@ elif selected == "Settings":
 
     st.info("Application settings and configuration options will be available here in a future version.")
     st.info("Application settings and configuration options will be available here in a future version.")
-
-
-
