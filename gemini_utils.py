@@ -93,8 +93,9 @@ def transcribe_audio_only(audio_path):
             - Use context clues from medical conversation patterns
             - Mark uncertainty with [SPEAKER_UNCERTAIN] before the line
             - Never leave speech unattributed - assign to most likely speaker
-
+            # *AUTODETECT Language and provide transcription in same language*
             EXECUTE: Process the provided audio and return clean diarized transcript following this protocol.
+            
             """
             response = model.generate_content([prompt, audio_file], request_options={"timeout": 600})
             return response.text
