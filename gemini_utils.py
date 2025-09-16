@@ -2,66 +2,30 @@ import streamlit as st
 import google.generativeai as genai
 import json
 import os
+import random
+from scripts import doctor_dictation, doctor_patient_dictation
 
-# Doctor Dictation and Doctor-Patient Conversation Script Generation
-def generate_medical_script(dictation_type="Doctor Dictation"):
+# Updated function to use local scripts
+def generate_medical_script(dictation_type, language):
+    """
+    Selects a random medical script from pre-defined dictionaries based on the
+    dictation type and language.
+    """
     try:
-        with st.spinner(f"Generating new {dictation_type.lower()} script..."):
-            model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
+        script_source = None
+        if dictation_type == "Doctor Dictation":
+            script_source = doctor_dictation
+        elif dictation_type == "Doctor-Patient Conversation":
+            script_source = doctor_patient_dictation
 
-            if dictation_type == "Doctor Dictation":
-                system_prompt = f"""
-                ##*Context*:-
-                #*You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.*
-                {st.session_state.get("is_healthcare")}='Yes'
-                ##*Generate heathcare specific context in the script*
-                {st.session_state.get("is_healthcare")}='No'
-                ##*Generate without heathcare specific context in the script*
-                ##*Guidelines*:
-                - *Do not repeat script*
-                - Restrcit use of punctuators other than neccessary gaps for pauses. 
-                - Output only the dictation script text, no titles, no formatting, no explanations.
-                - *generate not more than 100words*
-                - The script must sound like spoken dictation a doctor would give, with pause neccessary.
-                - Cover: patient intro, symptoms, exam findings, impression/diagnosis, treatment plan, and prescription.
-                - Use Indian medical context and safe, generic prescriptions.
-                - Script length: 150–450 words,1–3 minutes reading time
-                -Vary specialty, severity, and dictation style across scripts.
-                -Include edge cases in some scripts (unclear speech, mid-sentence correction, abrupt stop).
-                -*Use more medicine or durg names*
-                #*Output rule*:
-                Return only the dictation script text as if spoken by the doctor.
-                - *START DIRECT DICTATION- example::-- do not include-here we go,let's start direct dicatation or any such kind*
-                
-                """
-            else:  # Doctor-Patient Conversation
-                system_prompt = f"""
-            You are MedScribe Simulator. Your task is to generate a realistic, India-specific, fictional doctor-patient conversation script for QA testers to read aloud.
-                ##*Context*:
-                #*You are MedScribe Simulator. Your task is to generate India-specific, realistic medical dictation scripts for QA testers to read aloud when testing an AI medical scribe.*
-                {st.session_state.get("is_healthcare")}=='Yes'
-                ##*If the healthcare industry is selected as 'Yes', then include healthcare context in the
-                {st.session_state.get("is_healthcare")}=='No'
-                generate a general medical dictation script without specific healthcare context.*
-                ##*Guidelines*:
-                - *Do not repeat script *
-                - Output ONLY the diarized script text, with no titles, headers, or explanations.
-                - The script must be a back-and-forth dialogue.
-                - Start each line with either "Doctor: " or "Patient: ".
-                - The conversation should cover patient complaints, doctor's questions, diagnosis, and a treatment plan.
-                - Use Indian medical context and safe, generic prescriptions.
-                - Script length should be between 150 and 450 words.
+        if script_source and language in script_source and script_source[language]:
+            return random.choice(script_source[language])
+        else:
+            return f"Error: No '{dictation_type}' scripts found for the selected language '{language}'."
 
-                Output rule:
-                Return only the conversation script text itself. For example:
-                Doctor: Good morning, how can I help you?
-                Patient: I have been having a severe headache for three days, doctor.
-                """
-            response = model.generate_content(system_prompt)
-            return response.text.strip()
     except Exception as e:
-        st.error(f"Error generating script: {e}")
-        return "Failed to generate script."
+        st.error(f"An error occurred while selecting a script: {e}")
+        return "Error: Failed to generate a script due to an unexpected error."
 
 
 def transcribe_audio_only(audio_path):
@@ -71,7 +35,7 @@ def transcribe_audio_only(audio_path):
         with st.spinner('Uploading file for transcription---'):
             audio_file = genai.upload_file(path=audio_path)
         with st.spinner('Transcribing audio... This may take a moment.'):
-            model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
+            model = genai.GenerativeModel('models/gemini-2.5-flash')
             prompt = """
             #*IF a single speaker- Doctor dictation, transcribe as-is*.
             You are a specialized audio-to-text converter for doctor-patient conversations. Your task is to transcribe noisy phone audio recordings into clean, diarized text output with maximum speaker identification accuracy.
@@ -141,13 +105,28 @@ def transcribe_audio_only(audio_path):
 def extract_prescription_from_text(transcription_text):
     try:
         with st.spinner('Generating prescription from transcription...'):
-            model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
+            model = genai.GenerativeModel('models/gemini-2.5-flash')
             prompt = f"""
-            #*You are a highly intelligent medical data extraction system. You are given a text transcription of a doctor-patient consultation.*
-            #Your task is to extract key medical information from this text and format it into a single, valid JSON object according to the rules and structure below.
-            ### TRANSCRIPTION TEXT ###
-            {transcription_text}
-            ### RULES & JSON STRUCTURE ###
+            #You are a medical data extraction system. From a given doctor_dictation/doctor-patient transcription, extract key information and return a single valid JSON object.
+
+#*Rules*
+Empty fields → use ""; empty lists → use []. Never use null.
+Expand all standard medical abbreviations.- mg- milligram
+Never use any stopwards or anything else. 
+Medical History → capture past/current conditions (expand abbreviations). Example: "HTN" → "Hypertension". If none, use [].
+Medications:
+dose: in mg.
+dosage: morning-afternoon-night format (e.g., 1-0-1). If 0-x, convert to 1-0-0.
+class: Tablet, Capsule, Injection, Syrup, Drops, Ointment, Inhaler, Powder, Cream, Lotion, Suppository, Patch.
+route: expand (e.g., po → oral, iv → intravenous).
+freq: use predefined values only (once a day, twice a day, three times a day, Daily, Alternate Days, Sos, Weekly, Weekly twice, Weekly thrice, Stat).
+when: use predefined values only (Before food, After food, After Lunch, After Breakfast, After Dinner, Before Dinner, Before Lunch, Before Breakfast, Empty Stomach, Bed Time, Sos).
+Notes → capture any doctor’s free instructions for medication.
+Clinical Note → extra instructions not fitting elsewhere.
+Follow-up: if doctor says "after X days/weeks", calculate and format as dd-mm-yyyy from prescription date.
+Systematic Examinations, Nursing, Discharge, Tests, Referrals → fill if mentioned, else empty.
+
+
             # JSON OUTPUT STRUCTURE
             {{
                 "name": "", "date": "", "time": "", "doctorUsername": "", "patientUsername": "", "hospitalName": "", "hospitalId": "", "clinicalNote": "", "diagnosis": [], "complaints": [], "notes": [],
@@ -161,7 +140,7 @@ def extract_prescription_from_text(transcription_text):
                 "scribePrescription": {{"scribeId": "","imageUrl": "","publicId": "","date": ""}}
             }}
             """
-            response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+            response = model.generate_content([prompt, transcription_text], generation_config={"response_mime_type": "application/json"})
             parsed_json = json.loads(response.text.strip())
             return parsed_json
     except Exception as e:

@@ -1,3 +1,5 @@
+# mongodb_utils.py
+
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -14,18 +16,19 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-def upload_prescription_to_mongodb(prescription_data=None, audio_url=None,original_script=None,original_prescription=None,transcription=None,feedback_rating=None,feedback_text=None):
+def upload_prescription_to_mongodb(prescription_data=None, audio_url=None, original_script=None, original_prescription=None, transcription=None, feedback_rating=None, feedback_text=None, user_name=None):
     """
     Uploads prescription data and audio URL to MongoDB.
     Returns the inserted document ID or error.
     """
     try:
         doc = {
+            "user_name": user_name,  # <-- UPDATE: Added new user_name field
             "prescription": prescription_data,
             "audio_url": audio_url,
             "created_at": datetime.now(),
             "Original_Script":  original_script,
-            "Original Prescription":original_prescription,
+            "Original Prescription": original_prescription,
             "Transcription": transcription,
             "feedback_rating": feedback_rating,
             "feedback_text": feedback_text
