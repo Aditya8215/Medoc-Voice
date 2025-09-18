@@ -175,7 +175,8 @@ if selected == "Transcription":
                 if os.path.exists(record_dir):
                     shutil.rmtree(record_dir)
                 
-                keys_to_clear = ["transcription", "result", "cloudinary_url", "cloudinary_public_id", "upload_complete", "needs_transcription", "needs_prescription_generation", "script", "script_json"]
+                # --- FIX: Only clear previous run data, not the generated script ---
+                keys_to_clear = ["transcription", "result", "cloudinary_url", "cloudinary_public_id", "upload_complete", "needs_transcription", "needs_prescription_generation"]
                 for key in keys_to_clear:
                     st.session_state.pop(key, None)
                 
@@ -498,9 +499,9 @@ elif selected == "Home":
     st.title("Welcome to Medoc Voice 🩺")
     st.subheader("""
                 \n-This application is for testing and demonstration purposes only 
-                  1. Model- Gemini 1.5 Flash \n
-                  2. Input File - .wav file \n
-                  3. Output - JSON Prescription""")
+                 1. Model- Gemini 1.5 Flash \n
+                 2. Input File - .wav file \n
+                 3. Output - JSON Prescription""")
     st.markdown("---")
     st.subheader("""
         \nHow to Use This Application->
